@@ -1,10 +1,12 @@
 from django.db import models
+from common.models.deletable import DeletableModelMixin
 from common.models.timestamped import TimestampedModelMixin
 from django.conf import settings
 
 from common.models.uuid import UuidModelMixin
 
-class WordDefinition(TimestampedModelMixin, UuidModelMixin):
+
+class WordDefinition(TimestampedModelMixin, UuidModelMixin, DeletableModelMixin):
     word = models.CharField(max_length=255)
     definition = models.TextField()
     note = models.TextField()
@@ -14,5 +16,5 @@ class WordDefinition(TimestampedModelMixin, UuidModelMixin):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'slug'], name="user_slug_unique")
+            models.UniqueConstraint(fields=["user", "slug"], name="user_slug_unique")
         ]
