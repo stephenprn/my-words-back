@@ -1,3 +1,4 @@
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 from words.views.quiz import QuizViewSet
 from words.views.word_definition import WordDefinitionViewSet

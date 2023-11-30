@@ -4,6 +4,8 @@ from words.models.word_definition import WordDefinition
 from words.serializers.word_definition import WordDefinitionSerializer
 from rest_framework.response import Response
 
+from rest_framework.decorators import action
+
 
 class WordDefinitionViewSet(ModelViewSet, DeletableModelViewSetMixin[WordDefinition]):
     serializer_class = WordDefinitionSerializer
@@ -12,8 +14,12 @@ class WordDefinitionViewSet(ModelViewSet, DeletableModelViewSetMixin[WordDefinit
     def get_queryset(self):
         queryset = WordDefinition.objects.filter(
             user__id=self.request.user.id, deleted=False
-        ).all()
+        ).order_by("slug")
         return queryset
 
     def get_serializer_context(self):
         return {"request": self.request}
+
+    @action(methods=["get"], detail=False)
+    def count(self, request):
+        return Response(self.get_queryset().count())

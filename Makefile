@@ -4,6 +4,9 @@ init:
 clean:
 	find . -name '*.pyc' -delete
 
+generate_migrations:
+	python manage.py makemigrations
+
 migrate:
 	python3 manage.py migrate
 
