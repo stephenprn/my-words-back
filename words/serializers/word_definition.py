@@ -11,13 +11,13 @@ class WordDefinitionSerializer(serializers.ModelSerializer):
     slug = serializers.CharField(read_only=True)
     uuid = serializers.UUIDField(read_only=True)
 
-    def update(self, instance, validated_data):
+    def update(self, instance: WordDefinition, validated_data):
         slug = slugify(validated_data["word"])
 
         if slug != instance.slug and WordDefinition.objects.filter(
             user__id=self.context["request"].user.id, slug=slug
         ).exclude(id=instance.id):
-            raise serializers.ValidationError(f"A word with slug {slug} already exists")
+            raise serializers.ValidationError(f"Word \"{validated_data['word']}\" already exists")
 
         validated_data["slug"] = slug
 
@@ -34,7 +34,7 @@ class WordDefinitionSerializer(serializers.ModelSerializer):
         if WordDefinition.objects.filter(
             user__id=self.context["request"].user.id, slug=slug
         ):
-            raise serializers.ValidationError(f"A word with slug {slug} already exists")
+            raise serializers.ValidationError(f"Word \"{validated_data['word']}\" already exists")
 
         validated_data["slug"] = slug
         instance = WordDefinition(**validated_data)

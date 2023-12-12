@@ -12,7 +12,7 @@ from words.serializers.quiz import QuizDetailSerializer, QuizSerializer
 from words.serializers.quiz_answer import QuizAnswersSerializer
 from rest_framework.decorators import action
 
-from words.utils.quiz import compute_status
+from words.utils.quiz import compute_nbr_right_answers, compute_status
 
 
 class QuizViewSet(
@@ -79,7 +79,7 @@ class QuizViewSet(
         # check all response_indexes are correct
         if not all(
             [
-                r["response_index"] <= quiz.nbr_proposals
+                 r["response_index"] is None or r["response_index"] <= quiz.nbr_proposals
                 for r in answers_responses_map.values()
             ]
         ):
@@ -103,6 +103,7 @@ class QuizViewSet(
         )
 
         quiz.status = compute_status(quiz)
+        quiz.nbr_right_answers = compute_nbr_right_answers(quiz)
         quiz.save()
 
         return Response(QuizDetailSerializer(quiz).data)

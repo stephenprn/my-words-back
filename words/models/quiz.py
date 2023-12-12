@@ -22,6 +22,7 @@ class Quiz(TimestampedModelMixin, UuidModelMixin):
     )
     nbr_proposals = models.IntegerField(default=4, validators=[MinValueValidator(1)])
     nbr_questions = models.IntegerField(default=10, validators=[MinValueValidator(1)])
+    nbr_right_answers = models.IntegerField(default=0, validators=[MinValueValidator(0)])
 
 
 class QuizQuestion(UuidModelMixin):
@@ -29,10 +30,11 @@ class QuizQuestion(UuidModelMixin):
 
     index = models.IntegerField(validators=[MinValueValidator(1)])
 
-    # null if not answered yet, index if answered
+    # null if user timeout
     response_index = models.PositiveIntegerField(
         null=True, validators=[MinValueValidator(1)]
     )
+    # null if not answered yet, duration if answered
     response_duration = models.PositiveBigIntegerField(null=True)
 
 

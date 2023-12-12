@@ -9,8 +9,8 @@ from common.models.uuid import UuidModelMixin
 class WordDefinition(TimestampedModelMixin, UuidModelMixin, DeletableModelMixin):
     word = models.CharField(max_length=255)
     definition = models.TextField()
-    note = models.TextField()
-    example = models.TextField(null=True)
+    note = models.TextField(null=True, blank=True)
+    example = models.TextField(null=True, blank=True)
     slug = models.CharField(max_length=255)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 

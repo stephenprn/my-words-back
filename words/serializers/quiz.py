@@ -16,6 +16,7 @@ class QuizSerializer(serializers.ModelSerializer):
             "duration_limit",
             "nbr_proposals",
             "nbr_questions",
+            "nbr_right_answers",
             "status",
         ]
 
@@ -33,7 +34,8 @@ class QuizSerializer(serializers.ModelSerializer):
     uuid = serializers.UUIDField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
-    status = serializers.ChoiceField(choices=QuizStatus.choices, read_only=True)
+    status = serializers.ChoiceField(
+        choices=QuizStatus.choices, read_only=True)
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -41,7 +43,8 @@ class QuizSerializer(serializers.ModelSerializer):
         # for now, we take 100 random defintions
         # definitions will be used to generate questions and proposals
         word_definitions = (
-            WordDefinition.objects.filter(user__id=user.id).order_by("?").all()[:100]
+            WordDefinition.objects.filter(
+                user__id=user.id).order_by("?").all()[:100]
         )
 
         if len(word_definitions) < validated_data["nbr_questions"]:
@@ -86,12 +89,14 @@ class QuizSerializer(serializers.ModelSerializer):
                     index=proposals_order[proposal_index],
                 )
                 for proposal_index, wrong_answer in enumerate(
-                    random.sample(wrong_proposals, instance.nbr_proposals - 1), 1
+                    random.sample(wrong_proposals,
+                                  instance.nbr_proposals - 1), 1
                 )
             ]
             proposals = sorted(proposals, key=lambda p: p.index)
 
-            question.proposals.set(QuizQuestionProposal.objects.bulk_create(proposals))
+            question.proposals.set(
+                QuizQuestionProposal.objects.bulk_create(proposals))
 
         instance.save()
         validated_data["uuid"] = instance.uuid
@@ -109,6 +114,7 @@ class QuizDetailSerializer(QuizSerializer):
             "duration_limit",
             "nbr_proposals",
             "nbr_questions",
+            "nbr_right_answers",
             "status",
             "questions",
         ]
