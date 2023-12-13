@@ -14,7 +14,14 @@ class WordDefinitionViewSet(ModelViewSet, DeletableModelViewSetMixin[WordDefinit
     def get_queryset(self):
         queryset = WordDefinition.objects.filter(
             user__id=self.request.user.id, deleted=False
-        ).order_by("slug")
+        )
+
+        if self.request.query_params.get('q'):
+            queryset = queryset.filter(
+                word__unaccent__icontains=self.request.query_params.get('q')
+            )
+
+        queryset = queryset.order_by("slug")
         return queryset
 
     def get_serializer_context(self):
