@@ -17,7 +17,9 @@ class WordDefinitionSerializer(serializers.ModelSerializer):
         if slug != instance.slug and WordDefinition.objects.filter(
             user__id=self.context["request"].user.id, slug=slug
         ).exclude(id=instance.id):
-            raise serializers.ValidationError(f"Word \"{validated_data['word']}\" already exists")
+            raise serializers.ValidationError(
+                f"Word \"{validated_data['word']}\" already exists"
+            )
 
         validated_data["slug"] = slug
 
@@ -31,13 +33,25 @@ class WordDefinitionSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         slug = slugify(validated_data["word"])
 
-        if WordDefinition.objects.filter(
+        existing_word = WordDefinition.objects.filter(
             user__id=self.context["request"].user.id, slug=slug
-        ):
-            raise serializers.ValidationError(f"Word \"{validated_data['word']}\" already exists")
+        ).first()
+
+        if existing_word and not existing_word.deleted:
+            raise serializers.ValidationError(
+                f"Word \"{validated_data['word']}\" already exists"
+            )
 
         validated_data["slug"] = slug
-        instance = WordDefinition(**validated_data)
+
+        if existing_word:
+            instance = existing_word
+            instance.deleted = False
+
+            for prop, value in validated_data.items():
+                setattr(instance, prop, value)
+        else:
+            instance = WordDefinition(**validated_data)
 
         user = self.context["request"].user
         instance.user = user

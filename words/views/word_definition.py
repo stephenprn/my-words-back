@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 
-class WordDefinitionViewSet(ModelViewSet, DeletableModelViewSetMixin[WordDefinition]):
+class WordDefinitionViewSet(DeletableModelViewSetMixin[WordDefinition], ModelViewSet):
     serializer_class = WordDefinitionSerializer
     lookup_field = "uuid"
 
@@ -16,9 +16,9 @@ class WordDefinitionViewSet(ModelViewSet, DeletableModelViewSetMixin[WordDefinit
             user__id=self.request.user.id, deleted=False
         )
 
-        if self.request.query_params.get('q'):
+        if self.request.query_params.get("q"):
             queryset = queryset.filter(
-                word__unaccent__icontains=self.request.query_params.get('q')
+                word__unaccent__icontains=self.request.query_params.get("q")
             )
 
         queryset = queryset.order_by("slug")

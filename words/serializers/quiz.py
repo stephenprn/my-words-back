@@ -1,5 +1,11 @@
 from rest_framework import serializers
-from words.models.quiz import Quiz, QuizQuestion, QuizQuestionProposal, QuizStatus
+from words.models.quiz import (
+    Quiz,
+    QuizQuestion,
+    QuizQuestionProposal,
+    QuizQuestionType,
+    QuizStatus,
+)
 from words.models.word_definition import WordDefinition
 from words.serializers.quiz_question import QuizQuestionSerializer
 import random
@@ -25,7 +31,7 @@ class QuizSerializer(serializers.ModelSerializer):
         default=30 * 1000, validators=[MinValueValidator(1)]
     )
     nbr_proposals = serializers.IntegerField(
-        default=4, validators=[MinValueValidator(2), MaxValueValidator(10)]
+        default=4, validators=[MinValueValidator(2), MaxValueValidator(16)]
     )
     nbr_questions = serializers.IntegerField(
         default=10, validators=[MinValueValidator(1), MaxValueValidator(50)]
@@ -34,8 +40,7 @@ class QuizSerializer(serializers.ModelSerializer):
     uuid = serializers.UUIDField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
-    status = serializers.ChoiceField(
-        choices=QuizStatus.choices, read_only=True)
+    status = serializers.ChoiceField(choices=QuizStatus.choices, read_only=True)
 
     def create(self, validated_data):
         user = self.context["request"].user
@@ -43,8 +48,9 @@ class QuizSerializer(serializers.ModelSerializer):
         # for now, we take 100 random defintions
         # definitions will be used to generate questions and proposals
         word_definitions = (
-            WordDefinition.objects.filter(
-                user__id=user.id).order_by("?").all()[:100]
+            WordDefinition.objects.filter(deleted=False, user__id=user.id)
+            .order_by("?")
+            .all()[:100]
         )
 
         if len(word_definitions) < validated_data["nbr_questions"]:
@@ -68,7 +74,15 @@ class QuizSerializer(serializers.ModelSerializer):
                 wd for wd in word_definitions if wd.id != word_definition_question.id
             ]
 
-            question = QuizQuestion(index=question_index)
+            question = QuizQuestion(
+                index=question_index,
+                question_type=random.choice(
+                    [
+                        QuizQuestionType.GUESS_FROM_DEFINITION,
+                        QuizQuestionType.GUESS_FROM_WORD,
+                    ]
+                ),
+            )
             question.quiz = instance
             question.save()
 
@@ -89,14 +103,12 @@ class QuizSerializer(serializers.ModelSerializer):
                     index=proposals_order[proposal_index],
                 )
                 for proposal_index, wrong_answer in enumerate(
-                    random.sample(wrong_proposals,
-                                  instance.nbr_proposals - 1), 1
+                    random.sample(wrong_proposals, instance.nbr_proposals - 1), 1
                 )
             ]
             proposals = sorted(proposals, key=lambda p: p.index)
 
-            question.proposals.set(
-                QuizQuestionProposal.objects.bulk_create(proposals))
+            question.proposals.set(QuizQuestionProposal.objects.bulk_create(proposals))
 
         instance.save()
         validated_data["uuid"] = instance.uuid

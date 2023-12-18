@@ -22,11 +22,21 @@ class Quiz(TimestampedModelMixin, UuidModelMixin):
     )
     nbr_proposals = models.IntegerField(default=4, validators=[MinValueValidator(1)])
     nbr_questions = models.IntegerField(default=10, validators=[MinValueValidator(1)])
-    nbr_right_answers = models.IntegerField(default=0, validators=[MinValueValidator(0)])
+    nbr_right_answers = models.IntegerField(
+        default=0, validators=[MinValueValidator(0)]
+    )
+
+
+class QuizQuestionType(models.TextChoices):
+    GUESS_FROM_DEFINITION = "GUESS_FROM_DEFINITION", "GUESS_FROM_DEFINITION"
+    GUESS_FROM_WORD = "GUESS_FROM_WORD", "GUESS_FROM_WORD"
 
 
 class QuizQuestion(UuidModelMixin):
     quiz = models.ForeignKey(Quiz, related_name="questions", on_delete=models.CASCADE)
+    question_type = models.CharField(
+        choices=QuizQuestionType.choices,
+    )
 
     index = models.IntegerField(validators=[MinValueValidator(1)])
 
