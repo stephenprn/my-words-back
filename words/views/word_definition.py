@@ -5,6 +5,7 @@ from words.serializers.word_definition import WordDefinitionSerializer
 from rest_framework.response import Response
 
 from rest_framework.decorators import action
+from django.db.models import Q
 
 
 class WordDefinitionViewSet(DeletableModelViewSetMixin[WordDefinition], ModelViewSet):
@@ -18,7 +19,8 @@ class WordDefinitionViewSet(DeletableModelViewSetMixin[WordDefinition], ModelVie
 
         if self.request.query_params.get("q"):
             queryset = queryset.filter(
-                word__unaccent__icontains=self.request.query_params.get("q")
+                Q(word__unaccent__icontains=self.request.query_params.get("q"))
+                | Q(definition__unaccent__icontains=self.request.query_params.get("q"))
             )
 
         queryset = queryset.order_by("slug")
