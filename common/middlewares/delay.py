@@ -11,5 +11,5 @@ class DelayMiddleware(MiddlewareMixin):
     def process_response(self, request, response):
         # This method is called after the view
         # You can modify the response here
-        time.sleep(5)
+        time.sleep(0)
         return response
