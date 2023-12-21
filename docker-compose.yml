@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -8,7 +8,18 @@ services:
       POSTGRES_USER: ${SQL_USER}
       POSTGRES_PASSWORD: ${SQL_PASSWORD}
     ports:
-      - '${SQL_PORT}:5432'
+      - "${SQL_PORT}:5432"
+    networks:
+      - db
+  app:
+    container_name: my_words_flask_container
+    image: my_words_flask_container
+    env_file: .env.compose
+    command: >
+      bash -c "make migrate
+      && make server"
+    ports:
+      - "8000:8000"
     networks:
       - db
 
