@@ -15,9 +15,6 @@ services:
     container_name: my_words_app_container
     image: my_words_app_container
     env_file: .env.compose
-    command: >
-      bash -c "make migrate
-      && make server"
     ports:
       - "8000:8000"
     networks:
