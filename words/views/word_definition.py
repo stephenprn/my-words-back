@@ -23,6 +23,13 @@ class WordDefinitionViewSet(DeletableModelViewSetMixin[WordDefinition], ModelVie
                 | Q(definition__unaccent__icontains=self.request.query_params.get("q"))
             )
 
+        if self.request.query_params.get("collectionIn"):
+            queryset = queryset.filter(
+                collection__lang__in=self.request.query_params.get(
+                    "collectionIn"
+                ).split(",")
+            )
+
         queryset = queryset.order_by("slug")
         return queryset
 

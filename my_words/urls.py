@@ -18,8 +18,8 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('words/', include("words.urls")),
-	re_path(r'^auth/', include('djoser.urls')),
-	re_path(r'^auth/', include('djoser.urls.jwt')),
+    path("admin/", admin.site.urls),
+    path("words/", include("words.urls")),
+    re_path(r"^auth/", include("djoser.urls")),
+    re_path(r"^auth/", include("djoser.urls.jwt")),
 ]

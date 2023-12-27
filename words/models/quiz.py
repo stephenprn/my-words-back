@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from common.models.timestamped import TimestampedModelMixin
 from common.models.uuid import UuidModelMixin
+from words.models.collection import Collection
 from words.models.word_definition import WordDefinition
 from django.core.validators import MinValueValidator
 
@@ -24,6 +25,9 @@ class Quiz(TimestampedModelMixin, UuidModelMixin):
     nbr_questions = models.IntegerField(default=10, validators=[MinValueValidator(1)])
     nbr_right_answers = models.IntegerField(
         default=0, validators=[MinValueValidator(0)]
+    )
+    collection = models.ForeignKey(
+        Collection, related_name="quizes", on_delete=models.CASCADE
     )
 
 

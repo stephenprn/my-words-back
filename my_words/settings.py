@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "words",
     "djoser",
 ]
+DJOSER = {"LOGIN_FIELD": "email"}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -57,8 +58,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "common.middlewares.delay.DelayMiddleware",
 ]
+
+# extra middlewares
+extra_delay_request = int(os.environ.get("EXTRA_DELAY_REQUEST", "0"))
+
+if extra_delay_request:
+    MIDDLEWARE.append("common.middlewares.delay.DelayMiddleware")
 
 CORS_ALLOW_ALL_ORIGINS = True
 
@@ -81,7 +87,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "my_words.wsgi.application"
-
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

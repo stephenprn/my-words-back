@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from words.models.collection import Collection
 from words.models.quiz import (
     Quiz,
     QuizQuestion,
@@ -23,6 +24,7 @@ class QuizSerializer(serializers.ModelSerializer):
             "nbr_proposals",
             "nbr_questions",
             "nbr_right_answers",
+            "lang",
             "status",
         ]
 
@@ -36,6 +38,7 @@ class QuizSerializer(serializers.ModelSerializer):
     nbr_questions = serializers.IntegerField(
         default=10, validators=[MinValueValidator(1), MaxValueValidator(50)]
     )
+    lang = serializers.CharField(source="collection.lang")
 
     uuid = serializers.UUIDField(read_only=True)
     created_at = serializers.DateTimeField(read_only=True)
@@ -45,10 +48,22 @@ class QuizSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context["request"].user
 
+        collection_input = validated_data.pop("collection")
+        lang = collection_input["lang"]
+
+        collection = Collection.objects.filter(lang=lang).first()
+
+        if not collection:
+            raise serializers.ValidationError(
+                f"Collection with lang {validated_data['lang']} not found"
+            )
+
         # for now, we take 100 random defintions
         # definitions will be used to generate questions and proposals
         word_definitions = (
-            WordDefinition.objects.filter(deleted=False, user__id=user.id)
+            WordDefinition.objects.filter(
+                deleted=False, user__id=user.id, collection__lang=collection.lang
+            )
             .order_by("?")
             .all()[:100]
         )
@@ -64,6 +79,7 @@ class QuizSerializer(serializers.ModelSerializer):
             )
 
         instance = Quiz(**validated_data)
+        instance.collection = collection
         instance.user = user
         instance.save()
 
@@ -128,6 +144,7 @@ class QuizDetailSerializer(QuizSerializer):
             "nbr_questions",
             "nbr_right_answers",
             "status",
+            "lang",
             "questions",
         ]
 

@@ -7,7 +7,7 @@ from rest_framework.mixins import (
 )
 from rest_framework.response import Response
 from rest_framework import status
-from words.models.quiz import Quiz, QuizQuestion
+from words.models.quiz import Quiz, QuizQuestion, QuizStatus
 from words.serializers.quiz import QuizDetailSerializer, QuizSerializer
 from words.serializers.quiz_answer import QuizAnswersSerializer
 from rest_framework.decorators import action
@@ -34,12 +34,23 @@ class QuizViewSet(
         return QuizDetailSerializer
 
     def get_queryset(self):
-        queryset = (
-            Quiz.objects.filter(user__id=self.request.user.id)
-            .order_by("-created_at", "id")
-            .all()
-        )
-        return queryset
+        queryset = Quiz.objects.filter(user__id=self.request.user.id)
+
+        if self.request.query_params.get("statusIn"):
+            statuses = []
+
+            for status_str in self.request.query_params.get("statusIn").split(","):
+                if status_str not in QuizStatus:
+                    continue
+
+                statuses.append(QuizStatus[status_str])
+
+            if statuses:
+                queryset = queryset.filter(status__in=statuses)
+
+        queryset = queryset.order_by("-created_at", "id")
+
+        return queryset.all()
 
     def get_serializer_context(self):
         return {"request": self.request}
@@ -79,7 +90,7 @@ class QuizViewSet(
         # check all response_indexes are correct
         if not all(
             [
-                 r["response_index"] is None or r["response_index"] <= quiz.nbr_proposals
+                r["response_index"] is None or r["response_index"] <= quiz.nbr_proposals
                 for r in answers_responses_map.values()
             ]
         ):
