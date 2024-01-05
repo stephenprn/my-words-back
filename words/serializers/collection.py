@@ -3,15 +3,21 @@ from words.models.collection import Collection
 
 from django.core.validators import MinValueValidator
 
+from words.models.word_definition import WordDefinition
+
 
 class CollectionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Collection
         fields = ["uuid", "created_at", "updated_at", "lang", "index", "nbr_words"]
 
-    nbr_words = serializers.IntegerField(
-        source="definitions.count", read_only=True, validators=[MinValueValidator(0)]
+    nbr_words = serializers.SerializerMethodField(
+        read_only=True, validators=[MinValueValidator(0)]
     )
+
+    def get_nbr_words(self, collection: Collection):
+        query_set = WordDefinition.objects.filter(deleted=False, collection=collection)
+        return query_set.count()
 
     def update(self, instance: Collection, validated_data):
         if validated_data["lang"] != instance.lang:
