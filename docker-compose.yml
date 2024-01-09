@@ -11,6 +11,8 @@ services:
       - "${SQL_PORT}:5432"
     networks:
       - db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
   app:
     container_name: my_words_app_container
     image: my_words_app_container
@@ -23,3 +25,6 @@ services:
 networks:
   db:
     driver: bridge
+
+volumes:
+  pgdata:

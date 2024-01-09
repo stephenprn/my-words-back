@@ -1,5 +1,21 @@
 # my-words-back
 
+## Deploy
+
+### Set up docker
+
+1. Create local volume to persist db data:
+```
+docker volume create pgdata
+```
+2. Create `.env` and `.env.compose` from templates
+3. Build and run docker containers:
+```
+docker build -f Dockerfile -t my_words_app_container .
+docker-compose --env-file .env -f docker-compose.yml up --force-recreate -d db app
+```
+
+
 ## Django
 
 ### Add an app
