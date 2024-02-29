@@ -47,7 +47,12 @@ INSTALLED_APPS = [
     "words",
     "djoser",
 ]
-DJOSER = {"LOGIN_FIELD": "email"}
+DJOSER = {
+    "LOGIN_FIELD": "email",
+    "SERIALIZERS": {
+        'current_user': 'words.serializers.user.UserSerializer',
+    }
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

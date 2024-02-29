@@ -28,6 +28,10 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=150,
         blank=True,
     )
+    lang_code = models.CharField(
+        max_length=2,
+        blank=True,
+    )
     is_staff = models.BooleanField(
         _("staff status"),
         default=False,
@@ -49,3 +53,4 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["lang_code"]
