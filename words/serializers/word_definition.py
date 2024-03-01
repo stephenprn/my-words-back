@@ -1,6 +1,9 @@
+from typing import List, Optional
 from rest_framework import serializers
 from words.models.collection import Collection
 from words.models.word_definition import WordDefinition
+from words.models.word_tag import WordTag
+from words.serializers.word_tag import WordTagSerializer
 from words.utils.string import slugify
 
 
@@ -20,6 +23,20 @@ class WordDefinitionSerializer(serializers.ModelSerializer):
     slug = serializers.CharField(read_only=True)
     uuid = serializers.UUIDField(read_only=True)
     collection_lang = serializers.CharField(source="collection.lang")
+
+
+class WordDefinitionDetailSerializer(WordDefinitionSerializer):
+    class Meta(WordDefinitionSerializer.Meta):
+        fields = WordDefinitionSerializer.Meta.fields + ["tags"]
+
+    tags = WordTagSerializer(many=True)
+
+
+class WordDefinitionInputSerializer(WordDefinitionSerializer):
+    class Meta(WordDefinitionSerializer.Meta):
+        fields = WordDefinitionSerializer.Meta.fields + ["tags_slugs"]
+
+    tags_slugs = serializers.ListField(child=serializers.CharField(), required=False)
 
     def update(self, instance: WordDefinition, validated_data):
         slug = slugify(validated_data["word"])
@@ -56,6 +73,10 @@ class WordDefinitionSerializer(serializers.ModelSerializer):
 
             instance.collection = collection
 
+        instance.save()
+        tags_slugs = validated_data.pop("tags_slugs", None)
+        set_tags(instance=instance, tags_slugs=tags_slugs, user_id=user_id)
+
         for key, value in validated_data.items():
             setattr(instance, key, value)
 
@@ -90,6 +111,8 @@ class WordDefinitionSerializer(serializers.ModelSerializer):
                 f'Collection "{collection_lang}" not found'
             )
 
+        tags_slugs = validated_data.pop("tags_slugs", None)
+
         if existing_word:
             instance = existing_word
             instance.deleted = False
@@ -105,6 +128,33 @@ class WordDefinitionSerializer(serializers.ModelSerializer):
         instance.user = user
 
         instance.save()
+        set_tags(instance=instance, tags_slugs=tags_slugs, user_id=user_id)
+
+        instance.save()
         validated_data["uuid"] = instance.uuid
 
         return instance
+
+
+def set_tags(
+    instance: WordDefinition, tags_slugs: Optional[List[str]], user_id: int
+) -> WordDefinition:
+    # if not specified: no changes on instance
+    if tags_slugs is None:
+        return instance
+
+    if not len(tags_slugs):
+        instance.tags.set([])
+        return instance
+
+    existing_tags_slugs = [tag.slug for tag in instance.tags.all()]
+
+    # tags on instance are already good
+    if set(existing_tags_slugs) == set(tags_slugs):
+        return instance
+
+    tags = WordTag.objects.filter(user__id=user_id, slug__in=tags_slugs).all()
+
+    instance.tags.set(tags)
+
+    return instance

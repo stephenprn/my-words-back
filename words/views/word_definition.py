@@ -1,7 +1,10 @@
 from rest_framework.viewsets import ModelViewSet
 from common.views.deletable import DeletableModelViewSetMixin
 from words.models.word_definition import WordDefinition
-from words.serializers.word_definition import WordDefinitionSerializer
+from words.serializers.word_definition import (
+    WordDefinitionDetailSerializer,
+    WordDefinitionInputSerializer,
+)
 from rest_framework.response import Response
 
 from rest_framework.decorators import action
@@ -9,8 +12,13 @@ from django.db.models import Q
 
 
 class WordDefinitionViewSet(DeletableModelViewSetMixin[WordDefinition], ModelViewSet):
-    serializer_class = WordDefinitionSerializer
     lookup_field = "uuid"
+
+    def get_serializer_class(self):
+        if self.request.method in ["POST", "PATCH", "PUT"]:
+            return WordDefinitionInputSerializer
+
+        return WordDefinitionDetailSerializer
 
     def get_queryset(self):
         queryset = WordDefinition.objects.filter(

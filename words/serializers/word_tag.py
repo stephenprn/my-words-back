@@ -1,6 +1,4 @@
 from rest_framework import serializers
-from words.models.collection import Collection
-from words.models.word_definition import WordTag
 from words.models.word_tag import WordTag
 from words.utils.string import slugify
 
@@ -9,6 +7,7 @@ class WordTagSerializer(serializers.ModelSerializer):
     class Meta:
         model = WordTag
         fields = [
+            "uuid",
             "label",
             "emoji",
             "slug",
@@ -16,7 +15,6 @@ class WordTagSerializer(serializers.ModelSerializer):
 
     slug = serializers.CharField(read_only=True)
     uuid = serializers.UUIDField(read_only=True)
-    collection_lang = serializers.CharField(source="collection.lang")
 
     def update(self, instance: WordTag, validated_data):
         slug = slugify(validated_data["label"])
@@ -26,9 +24,7 @@ class WordTagSerializer(serializers.ModelSerializer):
 
         if slug != instance.slug:
             same_slug_instace = (
-                WordTag.objects.filter(
-                    user__id=user_id, slug=slug
-                )
+                WordTag.objects.filter(user__id=user_id, slug=slug)
                 .exclude(id=instance.id)
                 .first()
             )
@@ -51,9 +47,7 @@ class WordTagSerializer(serializers.ModelSerializer):
 
         validated_data["slug"] = slug
 
-        existing_tag = WordTag.objects.filter(
-            user__id=user_id, slug=slug
-        ).first()
+        existing_tag = WordTag.objects.filter(user__id=user_id, slug=slug).first()
 
         if existing_tag and not existing_tag.deleted:
             raise serializers.ValidationError(
