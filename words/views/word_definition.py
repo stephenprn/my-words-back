@@ -1,6 +1,7 @@
 from rest_framework.viewsets import ModelViewSet
 from common.views.deletable import DeletableModelViewSetMixin
 from words.models.word_definition import WordDefinition
+from words.models.word_tag import WordTag
 from words.serializers.word_definition import (
     WordDefinitionDetailSerializer,
     WordDefinitionInputSerializer,
@@ -8,7 +9,7 @@ from words.serializers.word_definition import (
 from rest_framework.response import Response
 
 from rest_framework.decorators import action
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 
 
 class WordDefinitionViewSet(DeletableModelViewSetMixin[WordDefinition], ModelViewSet):
@@ -23,7 +24,7 @@ class WordDefinitionViewSet(DeletableModelViewSetMixin[WordDefinition], ModelVie
     def get_queryset(self):
         queryset = WordDefinition.objects.filter(
             user__id=self.request.user.id, deleted=False
-        )
+        ).prefetch_related(Prefetch('tags', queryset=WordTag.objects.order_by('slug')), 'collection')
 
         if self.request.query_params.get("q"):
             queryset = queryset.filter(
