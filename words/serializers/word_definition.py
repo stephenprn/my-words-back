@@ -153,7 +153,7 @@ def set_tags(
     if set(existing_tags_slugs) == set(tags_slugs):
         return instance
 
-    tags = WordTag.objects.filter(user__id=user_id, slug__in=tags_slugs).all()
+    tags = WordTag.objects.filter(user__id=user_id, slug__in=tags_slugs).distinct().all()
 
     instance.tags.set(tags)
 

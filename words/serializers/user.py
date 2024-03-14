@@ -19,4 +19,8 @@ class UserSerializer(UserSerializer):
         ]
 
     collections = CollectionSerializer(many=True)
-    tags = WordTagSerializer(many=True)
+    tags = serializers.SerializerMethodField()
+
+    def get_tags(self, instance):
+        tags = instance.tags.all().order_by('slug')
+        return WordTagSerializer(tags, many=True).data

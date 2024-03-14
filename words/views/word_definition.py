@@ -26,21 +26,28 @@ class WordDefinitionViewSet(DeletableModelViewSetMixin[WordDefinition], ModelVie
             user__id=self.request.user.id, deleted=False
         ).prefetch_related(Prefetch('tags', queryset=WordTag.objects.order_by('slug')), 'collection')
 
-        if self.request.query_params.get("q"):
+        q = self.request.query_params.get("q")
+        collection_in = self.request.query_params.get("collectionIn")
+        tag_in = self.request.query_params.get("tagIn")
+
+        if q:
             queryset = queryset.filter(
-                Q(word__unaccent__icontains=self.request.query_params.get("q"))
-                | Q(definition__unaccent__icontains=self.request.query_params.get("q"))
+                Q(word__unaccent__icontains=q)
+                | Q(definition__unaccent__icontains=q)
             )
 
-        if self.request.query_params.get("collectionIn"):
+        if collection_in:
             queryset = queryset.filter(
-                collection__lang__in=self.request.query_params.get(
-                    "collectionIn"
-                ).split(",")
+                collection__lang__in=collection_in.split(",")
+            )
+
+        if tag_in:
+            queryset = queryset.filter(
+                tags__slug__in=tag_in.split(",")
             )
 
         queryset = queryset.order_by("slug")
-        return queryset
+        return queryset.distinct()
 
     def get_serializer_context(self):
         return {"request": self.request}
