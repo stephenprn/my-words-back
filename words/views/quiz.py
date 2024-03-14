@@ -8,7 +8,11 @@ from rest_framework.mixins import (
 from rest_framework.response import Response
 from rest_framework import status
 from words.models.quiz import Quiz, QuizQuestion, QuizStatus
-from words.serializers.quiz import QuizDetailSerializer, QuizSerializer
+from words.serializers.quiz import (
+    QuizDetailSerializer,
+    QuizInputSerializer,
+    QuizSerializer,
+)
 from words.serializers.quiz_answer import QuizAnswersSerializer
 from rest_framework.decorators import action
 
@@ -30,6 +34,9 @@ class QuizViewSet(
 
         if self.action == "list":
             return QuizSerializer
+
+        if self.action == "create":
+            return QuizInputSerializer
 
         return QuizDetailSerializer
 

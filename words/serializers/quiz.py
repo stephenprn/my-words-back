@@ -12,6 +12,8 @@ from words.serializers.quiz_question import QuizQuestionSerializer
 import random
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+from words.serializers.word_tag import WordTagSerializer
+
 
 class QuizSerializer(serializers.ModelSerializer):
     class Meta:
@@ -45,6 +47,14 @@ class QuizSerializer(serializers.ModelSerializer):
     updated_at = serializers.DateTimeField(read_only=True)
     status = serializers.ChoiceField(choices=QuizStatus.choices, read_only=True)
 
+
+class QuizInputSerializer(QuizSerializer):
+    class Meta(QuizSerializer.Meta):
+        fields = QuizSerializer.Meta.fields + ["tags_slugs", "questions"]
+
+    tags_slugs = serializers.ListField(child=serializers.CharField(), required=False)
+    questions = QuizQuestionSerializer(many=True, read_only=True)
+
     def create(self, validated_data):
         user = self.context["request"].user
 
@@ -58,25 +68,24 @@ class QuizSerializer(serializers.ModelSerializer):
                 f"Collection with lang {validated_data['lang']} not found"
             )
 
+        tags_slugs = validated_data.pop("tags_slugs", None)
+
         # for now, we take 100 random defintions
         # definitions will be used to generate questions and proposals
-        word_definitions = (
-            WordDefinition.objects.filter(
-                deleted=False, user__id=user.id, collection__lang=collection.lang
-            )
-            .order_by("?")
-            .all()[:100]
+        query = WordDefinition.objects.filter(
+            deleted=False, user__id=user.id, collection__lang=collection.lang
         )
 
+        if tags_slugs:
+            query = query.filter(tags__slug__in=tags_slugs)
+
+        word_definitions = query.order_by("?").all()[:100]
+
         if len(word_definitions) < validated_data["nbr_questions"]:
-            raise serializers.ValidationError(
-                f"Cannot create a quiz with {validated_data['nbr_questions']} questions with only {len(word_definitions)} definitions saved"
-            )
+            raise serializers.ValidationError("NBR_WORDS_TOO_LOW")
 
         if len(word_definitions) < validated_data["nbr_proposals"]:
-            raise serializers.ValidationError(
-                f"Cannot create a quiz with {validated_data['nbr_proposals']} proposals with only {len(word_definitions)} definitions saved"
-            )
+            raise serializers.ValidationError("NBR_WORDS_TOO_LOW")
 
         instance = Quiz(**validated_data)
         instance.collection = collection
@@ -134,6 +143,11 @@ class QuizSerializer(serializers.ModelSerializer):
 
 class QuizDetailSerializer(QuizSerializer):
     class Meta(QuizSerializer.Meta):
-        fields = QuizSerializer.Meta.fields + ["questions"]
+        fields = QuizSerializer.Meta.fields + ["questions", "tags"]
 
     questions = QuizQuestionSerializer(many=True, read_only=True)
+    tags = serializers.SerializerMethodField()
+
+    def get_tags(self, instance):
+        tags = instance.tags.all().order_by("slug")
+        return WordTagSerializer(tags, many=True).data

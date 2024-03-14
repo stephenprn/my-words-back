@@ -29,7 +29,11 @@ class WordDefinitionDetailSerializer(WordDefinitionSerializer):
     class Meta(WordDefinitionSerializer.Meta):
         fields = WordDefinitionSerializer.Meta.fields + ["tags"]
 
-    tags = WordTagSerializer(many=True)
+    tags = serializers.SerializerMethodField()
+
+    def get_tags(self, instance):
+        tags = instance.tags.all().order_by("slug")
+        return WordTagSerializer(tags, many=True).data
 
 
 class WordDefinitionInputSerializer(WordDefinitionSerializer):
@@ -153,7 +157,9 @@ def set_tags(
     if set(existing_tags_slugs) == set(tags_slugs):
         return instance
 
-    tags = WordTag.objects.filter(user__id=user_id, slug__in=tags_slugs).distinct().all()
+    tags = (
+        WordTag.objects.filter(user__id=user_id, slug__in=tags_slugs).distinct().all()
+    )
 
     instance.tags.set(tags)
 

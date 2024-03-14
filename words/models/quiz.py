@@ -6,6 +6,8 @@ from words.models.collection import Collection
 from words.models.word_definition import WordDefinition
 from django.core.validators import MinValueValidator
 
+from words.models.word_tag import WordTag
+
 
 class QuizStatus(models.TextChoices):
     NOT_STARTED = "NOT_STARTED", "NOT_STARTED"
@@ -29,6 +31,7 @@ class Quiz(TimestampedModelMixin, UuidModelMixin):
     collection = models.ForeignKey(
         Collection, related_name="quizes", on_delete=models.CASCADE
     )
+    tags = models.ManyToManyField(WordTag, related_name="quizes")
 
 
 class QuizQuestionType(models.TextChoices):
