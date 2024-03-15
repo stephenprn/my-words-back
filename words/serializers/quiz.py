@@ -8,6 +8,7 @@ from words.models.quiz import (
     QuizStatus,
 )
 from words.models.word_definition import WordDefinition
+from words.models.word_tag import WordTag
 from words.serializers.quiz_question import QuizQuestionSerializer
 import random
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -69,6 +70,16 @@ class QuizInputSerializer(QuizSerializer):
             )
 
         tags_slugs = validated_data.pop("tags_slugs", None)
+        tags = None
+
+        if tags_slugs:
+            tags_slugs = list(set(tags_slugs))
+            tags = WordTag.objects.filter(slug__in=tags_slugs)
+
+            if len(tags_slugs) != len(tags):
+                raise serializers.ValidationError(
+                    f"Some tags were not found"
+                )
 
         # for now, we take 100 random defintions
         # definitions will be used to generate questions and proposals
@@ -90,6 +101,11 @@ class QuizInputSerializer(QuizSerializer):
         instance = Quiz(**validated_data)
         instance.collection = collection
         instance.user = user
+
+        if tags:
+            instance.save()
+            instance.tags.set(tags)
+
         instance.save()
 
         for question_index, word_definition_question in enumerate(
